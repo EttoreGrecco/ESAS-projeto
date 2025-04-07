@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparar Câmbio</title>
+  <link rel="stylesheet" href="/projeto-python/static/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>📊 Comparação de Câmbio</h1>
+    <nav>
+      <a href="/">Início</a>
+      <a href="/comparacao">Comparar Câmbio</a>
+      <a href="/casas">Casas de Câmbio</a>
+      <a href="/usuario">Minha Área</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Tabela Comparativa</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço</th>
+            <th>Moeda</th>
+            <th>Taxa</th>
+            <th>Atualizado</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-cambio">
+          <!-- Dados populados via backend ou JS -->
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Tendência de Câmbio</h2>
+      <canvas id="graficoCambio" width="400" height="200"></canvas>
+    </section>
+
+    <section>
+      <h2>Alerta de Câmbio</h2>
+      <form method="POST" action="/alerta">
+        <label>Moeda: <input name="moeda" required /></label>
+        <label>Valor desejado: <input name="limite" type="number" required /></label>
+        <button type="submit">Criar Alerta</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

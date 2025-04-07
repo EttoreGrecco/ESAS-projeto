@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Área</title>
+  <link rel="stylesheet" href="/projeto-python/static/styles.css">
+</head>
+<body>
+  <header>
+    <h1>👤 Minha Área</h1>
+    <nav>
+      <a href="/">Início</a>
+      <a href="/comparacao">Comparar Câmbio</a>
+      <a href="/casas">Casas de Câmbio</a>
+      <a href="/usuario">Minha Área</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Histórico de Buscas</h2>
+      <ul id="historico">
+        <!-- Exibir buscas anteriores -->
+      </ul>
+    </section>
+
+    <section>
+      <h2>Destinos Favoritos</h2>
+      <ul id="favoritos">
+        <!-- Exibir favoritos -->
+      </ul>
+    </section>
+
+    <section>
+      <h2>Alertas de Câmbio</h2>
+      <form method="POST" action="/usuario/alerta">
+        <input type="text" name="moeda" placeholder="Moeda" required />
+        <input type="number" name="valor" placeholder="Valor desejado" required />
+        <button type="submit">Salvar Alerta</button>
+      </form>
+      <ul id="alertas">
+        <!-- Listagem de alertas -->
+      </ul>
+    </section>
+
+    <section>
+      <h2>Simulação de Câmbio</h2>
+      <form method="POST" action="/usuario/simulacao">
+        <input type="number" name="valor" placeholder="Valor em BRL" required />
+        <select name="moeda">
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="ARS">ARS</option>
+          <option value="CLP">CLP</option>
+        </select>
+        <button type="submit">Simular</button>
+      </form>
+      <div id="resultado-simulacao">
+        <!-- Mostrar resultado da simulação -->
+      </div>
+    </section>
+  </main>
+</body>
+</html>

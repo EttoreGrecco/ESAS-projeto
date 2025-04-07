@@ -2,14 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRightLeft, RefreshCw } from 'lucide-react';
 import { currencies } from '../data/mockData';
 
-// Taxas de câmbio simuladas (em produção, isso viria de uma API)
-const mockRates: Record<string, Record<string, number>> = {
-  'BRL': { 'USD': 0.2, 'EUR': 0.19, 'GBP': 0.16, 'JPY': 30.12 },
-  'USD': { 'BRL': 5.0, 'EUR': 0.93, 'GBP': 0.79, 'JPY': 150.58 },
-  'EUR': { 'BRL': 5.37, 'USD': 1.07, 'GBP': 0.85, 'JPY': 161.91 },
-  'GBP': { 'BRL': 6.31, 'USD': 1.26, 'EUR': 1.17, 'JPY': 190.48 },
-  'JPY': { 'BRL': 0.033, 'USD': 0.0066, 'EUR': 0.0062, 'GBP': 0.0052 }
-};
+// Cache em memória
+const rateCache: Record<string, number> = {};
 
 export default function CurrencyConverter() {
   const [amount, setAmount] = useState<string>('1');
@@ -18,12 +12,62 @@ export default function CurrencyConverter() {
   const [result, setResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const convertCurrency = () => {
+  const sgsMap: Record<string, number> = {
+    USD: 1,
+    EUR: 21619,
+    GBP: 21623,
+    JPY: 21622, // Corrigido
+  };
+
+  const fetchRateFromBCB = async (currency: string): Promise<number> => {
+    const code = sgsMap[currency];
+    if (!code) return 1; // BRL para BRL
+  
+    const cacheKey = currency;
+  
+    // Retorna do cache se já buscou
+    if (rateCache[cacheKey]) {
+      return rateCache[cacheKey];
+    }
+  
+    try {
+      const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${code}/dados?formato=json&ultimos=1`;
+      const response = await fetch(url);
+      const data = await response.json();
+      const valor = parseFloat(data?.[0]?.valor?.replace(',', '.') || '0');
+  
+      if (valor > 0) {
+        rateCache[cacheKey] = valor;
+        return valor;
+      } else {
+        throw new Error('Valor inválido');
+      }
+    } catch (error) {
+      console.warn(`Erro ao buscar taxa para ${currency}:`, error);
+      // Fallback: usa valor anterior do cache
+      return rateCache[cacheKey] || 1;
+    }
+  };  
+
+  const convertCurrency = async () => {
     setIsLoading(true);
-    const rate = mockRates[fromCurrency]?.[toCurrency] || 0;
+
+    let rate = 1;
+    if (fromCurrency === 'BRL') {
+      const targetRate = await fetchRateFromBCB(toCurrency);
+      rate = targetRate;
+    } else if (toCurrency === 'BRL') {
+      const baseRate = await fetchRateFromBCB(fromCurrency);
+      rate = 1 / baseRate;
+    } else {
+      const baseRate = await fetchRateFromBCB(fromCurrency);
+      const targetRate = await fetchRateFromBCB(toCurrency);
+      rate = targetRate / baseRate;
+    }
+
     const converted = (parseFloat(amount) * rate).toFixed(2);
     setResult(converted);
-    setTimeout(() => setIsLoading(false), 500); // Simula delay da API
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -42,9 +86,7 @@ export default function CurrencyConverter() {
       <h2 className="text-3xl font-bold mb-6 text-blue-600">Conversor de Moedas</h2>
       <div className="flex flex-col md:flex-row gap-6 items-center">
         <div className="w-full">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Valor para Conversão
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Valor para Conversão</label>
           <input
             type="number"
             value={amount}
@@ -52,20 +94,16 @@ export default function CurrencyConverter() {
             className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
             min="0"
             placeholder="Digite o valor"
-            aria-label="Valor para conversão"
           />
         </div>
-        
+
         <div className="flex items-center gap-4 w-full">
           <div className="w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              De
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">De</label>
             <select
               value={fromCurrency}
               onChange={(e) => setFromCurrency(e.target.value)}
               className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-              aria-label="Moeda de origem"
             >
               {currencies.map((currency) => (
                 <option key={currency.code} value={currency.code}>
@@ -74,24 +112,20 @@ export default function CurrencyConverter() {
               ))}
             </select>
           </div>
-          
+
           <button
             onClick={handleSwap}
             className="p-4 rounded-full hover:bg-blue-50 transition-all duration-300 mt-6"
-            aria-label="Inverter moedas"
           >
             <ArrowRightLeft className="w-6 h-6 text-blue-600" />
           </button>
-          
+
           <div className="w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Para
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Para</label>
             <select
               value={toCurrency}
               onChange={(e) => setToCurrency(e.target.value)}
               className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-              aria-label="Moeda de destino"
             >
               {currencies.map((currency) => (
                 <option key={currency.code} value={currency.code}>
